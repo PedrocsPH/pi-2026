@@ -1,0 +1,101 @@
+<svg viewBox="0 0 860 330" xmlns="http://www.w3.org/2000/svg">
+          <rect x="2" y="2" width="856" height="326" rx="10" fill="#f7fbf9" stroke="#bfdacf" stroke-width="1.5"/>
+
+          <!-- VASO DE PLANTA + SENSOR -->
+          <rect x="20" y="38" width="180" height="270" rx="8" fill="#ffffff" stroke="#098160" stroke-width="1.6"/>
+          <rect x="20" y="38" width="180" height="28" rx="8" fill="#098160"/>
+          <text x="110" y="56" text-anchor="middle" fill="#ffffff" font-size="10" font-weight="700">1. Vaso &amp; Sensor de Solo</text>
+
+          <!-- Vaso Ilustração -->
+          <polygon points="62,188 158,188 144,268 76,268" fill="#d99b66" stroke="#8c5828" stroke-width="1.5"/>
+          <ellipse cx="110" cy="188" rx="48" ry="10" fill="#5c3a21"/>
+          <!-- Planta -->
+          <path d="M 110 183 L 110 138" stroke="#148f63" stroke-width="3.5" stroke-linecap="round"/>
+          <path d="M 110 163 C 86 158, 81 138, 104 143" fill="#22b57f"/>
+          <path d="M 110 153 C 134 148, 139 128, 116 133" fill="#148f63"/>
+
+          <!-- Sonda no solo -->
+          <rect x="82" y="92" width="56" height="34" rx="4" fill="#1d5fa7" stroke="#0f3c6e" stroke-width="1.2"/>
+          <text x="110" y="107" text-anchor="middle" fill="#ffffff" font-size="8" font-weight="700">Módulo Sensor</text>
+          <text x="110" y="119" text-anchor="middle" fill="#d4e5fa" font-size="7">VCC | GND | A0</text>
+          <line x1="98" y1="126" x2="98" y2="205" stroke="#c17d22" stroke-width="3"/>
+          <line x1="122" y1="126" x2="122" y2="205" stroke="#c17d22" stroke-width="3"/>
+          <text x="110" y="290" text-anchor="middle" fill="#3c5750" font-size="8">Lê a condutividade da terra</text>
+
+          <!-- PLACA ARDUINO UNO / ESP32 -->
+          <rect x="262" y="38" width="218" height="270" rx="8" fill="#ffffff" stroke="#0b463a" stroke-width="2"/>
+          <rect x="262" y="38" width="218" height="28" rx="8" fill="#0b463a"/>
+          <text x="371" y="56" text-anchor="middle" fill="#ffffff" font-size="10" font-weight="700">2. Arduino Uno R3 / ESP32</text>
+
+          <rect x="278" y="80" width="186" height="84" rx="6" fill="#eaf6f2" stroke="#6dbda3" stroke-width="1.2"/>
+          <text x="371" y="98" text-anchor="middle" fill="#0b463a" font-size="9.5" font-weight="700">Entradas de Sensores</text>
+          <text x="288" y="116" fill="#18342e" font-size="8.4">&bull; Pino A0 (Uno) / GPIO 34 (ESP32)</text>
+          <text x="288" y="131" fill="#18342e" font-size="8.4">&bull; Alimentação Sensor: 5V / 3.3V</text>
+          <text x="288" y="146" fill="#18342e" font-size="8.4">&bull; Terra Comum: GND</text>
+
+          <rect x="278" y="178" width="186" height="112" rx="6" fill="#e1f4f7" stroke="#0e91ac" stroke-width="1.2"/>
+          <text x="371" y="196" text-anchor="middle" fill="#085a6c" font-size="9.5" font-weight="700">Saídas de Controle &amp; Rede</text>
+          <text x="288" y="214" fill="#18342e" font-size="8.4">&bull; Pino 7 (Uno) / GPIO 26 (ESP32)</text>
+          <text x="296" y="227" fill="#3c5750" font-size="7.8">Envia sinal digital ao Relé (IN)</text>
+          <text x="288" y="244" fill="#18342e" font-size="8.4">&bull; Pino 13 / GPIO 2: LED Status</text>
+          <text x="288" y="261" fill="#18342e" font-size="8.4">&bull; USB Serial / Wi-Fi: Liga ao Site</text>
+
+          <!-- MÓDULO RELÉ 5V -->
+          <rect x="534" y="38" width="140" height="270" rx="8" fill="#ffffff" stroke="#c17d22" stroke-width="1.8"/>
+          <rect x="534" y="38" width="140" height="28" rx="8" fill="#c17d22"/>
+          <text x="604" y="56" text-anchor="middle" fill="#ffffff" font-size="10" font-weight="700">3. Módulo Relé 5V</text>
+
+          <rect x="546" y="80" width="116" height="84" rx="6" fill="#fbf0dc" stroke="#d18a2b" stroke-width="1.2"/>
+          <text x="604" y="98" text-anchor="middle" fill="#8c560f" font-size="9" font-weight="700">Lado Lógico (Arduino)</text>
+          <text x="556" y="116" fill="#18342e" font-size="8.4">&bull; VCC &larr; 5V Arduino</text>
+          <text x="556" y="131" fill="#18342e" font-size="8.4">&bull; GND &larr; GND Arduino</text>
+          <text x="556" y="146" fill="#18342e" font-size="8.4">&bull; IN  &larr; Pino 7 / GPIO26</text>
+
+          <rect x="546" y="178" width="116" height="112" rx="6" fill="#fcedea" stroke="#d55242" stroke-width="1.2"/>
+          <text x="604" y="196" text-anchor="middle" fill="#a8382a" font-size="9" font-weight="700">Bornes (Chaveamento)</text>
+          <text x="556" y="216" fill="#18342e" font-size="8.4">&bull; COM (Comum):</text>
+          <text x="562" y="228" fill="#5a706a" font-size="7.6">Recebe (+) da Fonte 5V</text>
+          <text x="556" y="248" fill="#18342e" font-size="8.4">&bull; NO (Norm. Aberto):</text>
+          <text x="562" y="260" fill="#5a706a" font-size="7.6">Vai p/ (+) da Mini Bomba</text>
+
+          <!-- RESERVATÓRIO + MINI BOMBA -->
+          <rect x="712" y="38" width="130" height="270" rx="8" fill="#ffffff" stroke="#1d5fa7" stroke-width="1.8"/>
+          <rect x="712" y="38" width="130" height="28" rx="8" fill="#1d5fa7"/>
+          <text x="777" y="56" text-anchor="middle" fill="#ffffff" font-size="9.5" font-weight="700">4. Bomba &amp; Água</text>
+
+          <!-- Fonte Externa -->
+          <rect x="724" y="78" width="106" height="50" rx="5" fill="#eef2f1" stroke="#7f8e8a" stroke-width="1.2"/>
+          <text x="777" y="96" text-anchor="middle" fill="#18342e" font-size="8.4" font-weight="700">Fonte 5V Externa</text>
+          <text x="777" y="112" text-anchor="middle" fill="#5a706a" font-size="7.6">(USB ou 4x Pilhas AA)</text>
+
+          <!-- Tanque de Água + Bomba Submersa -->
+          <rect x="724" y="152" width="106" height="138" rx="6" fill="#dff5f8" stroke="#0e91ac" stroke-width="1.5"/>
+          <rect x="726" y="182" width="102" height="106" rx="4" fill="#b3e5f2"/>
+          <text x="768" y="171" text-anchor="middle" fill="#085a6c" font-size="8" font-weight="700">Reservatório</text>
+
+          <rect x="742" y="232" width="70" height="42" rx="5" fill="#1d5fa7" stroke="#0f3c6e" stroke-width="1.2"/>
+          <text x="777" y="250" text-anchor="middle" fill="#ffffff" font-size="8" font-weight="700">Mini Bomba</text>
+          <text x="777" y="262" text-anchor="middle" fill="#d4e5fa" font-size="7">Submersa 5V</text>
+
+          <!-- Fios entre Sensor e Arduino -->
+          <line x1="138" y1="109" x2="278" y2="116" stroke="#098160" stroke-width="2"/>
+          <rect x="203" y="99" width="56" height="24" rx="4" fill="#eaf6f2" stroke="#098160" stroke-width="1"/>
+          <text x="231" y="109" text-anchor="middle" fill="#0b463a" font-size="7.2" font-weight="800">A0 + 5V</text>
+          <text x="231" y="119" text-anchor="middle" fill="#098160" font-size="7" font-weight="700">e GND</text>
+
+          <!-- Fios entre Arduino e Relé -->
+          <line x1="464" y1="214" x2="546" y2="145" stroke="#c17d22" stroke-width="2"/>
+          <rect x="483" y="165" width="48" height="22" rx="4" fill="#fbf0dc" stroke="#c17d22" stroke-width="1"/>
+          <text x="507" y="179" text-anchor="middle" fill="#8c560f" font-size="7.4" font-weight="800">Pino 7 &rarr; IN</text>
+
+          <!-- Fios entre Relé, Fonte e Bomba -->
+          <line x1="724" y1="102" x2="662" y2="216" stroke="#d55242" stroke-width="2"/>
+          <line x1="662" y1="252" x2="742" y2="252" stroke="#d55242" stroke-width="2"/>
+          <!-- Fio Preto GND contornando pela lateral direita sem cruzar texto -->
+          <path d="M 818 128 L 818 252 L 812 252" fill="none" stroke="#18342e" stroke-width="1.8"/>
+
+          <!-- Mangueira de Água da Bomba até o Vaso (pelo topo externo sem cruzar cabeçalhos) -->
+          <path d="M 812 242 L 836 242 L 836 16 L 142 16 L 142 175" fill="none" stroke="#0e91ac" stroke-width="3" stroke-dasharray="6,3"/>
+          <rect x="355" y="6" width="210" height="18" rx="4" fill="#0e91ac"/>
+          <text x="460" y="18" text-anchor="middle" fill="#ffffff" font-size="8.2" font-weight="700">&larr; Mangueira de Água (Bomba p/ Vaso)</text>
+        </svg>

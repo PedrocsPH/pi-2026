@@ -1,0 +1,92 @@
+<svg viewBox="0 0 860 360" xmlns="http://www.w3.org/2000/svg">
+          <rect x="2" y="2" width="856" height="356" rx="10" fill="#f7fbf9" stroke="#bfdacf" stroke-width="1.5"/>
+
+          <!-- CENTRAL TABLE: verda.device -->
+          <rect x="295" y="16" width="265" height="232" rx="7" fill="#ffffff" stroke="#0b463a" stroke-width="2"/>
+          <rect x="295" y="16" width="265" height="28" rx="7" fill="#0b463a"/>
+          <text x="427" y="35" text-anchor="middle" fill="#ffffff" font-size="10.5" font-weight="700">verda.device (Tabela Principal)</text>
+          <text x="307" y="60" fill="#098160" font-size="8.5" font-weight="700">PK  id : VARCHAR(40)  [ex: ARD-IRR-0421]</text>
+          <text x="307" y="75" fill="#18342e" font-size="8.2">    name : VARCHAR(120) &bull; location : VARCHAR(160)</text>
+          <text x="307" y="90" fill="#18342e" font-size="8.2">    type : VARCHAR(60) &bull; crop : VARCHAR(80)</text>
+          <text x="307" y="105" fill="#18342e" font-size="8.2">    moisture, temperature, water, ph : DOUBLE</text>
+          <text x="307" y="120" fill="#18342e" font-size="8.2">    last_seen_at : TIMESTAMPTZ</text>
+          <text x="307" y="135" fill="#18342e" font-size="8.2">    min_moisture : INT (padrão 40%)</text>
+          <text x="307" y="150" fill="#18342e" font-size="8.2">    min_ph, max_ph : DOUBLE (5.5 a 7.0)</text>
+          <text x="307" y="165" fill="#18342e" font-size="8.2">    default_duration_min : INT &bull; default_regime : VARCHAR</text>
+          <text x="307" y="180" fill="#18342e" font-size="8.2">    auto_irrigation, disconnect_alerts : BOOLEAN</text>
+          <text x="307" y="195" fill="#18342e" font-size="8.2">    irrigating_until : TIMESTAMPTZ</text>
+          <text x="307" y="210" fill="#18342e" font-size="8.2">    irrigation_mode, irrigation_regime : VARCHAR</text>
+          <text x="307" y="225" fill="#18342e" font-size="8.2">    firmware, connectivity : VARCHAR &bull; created_at</text>
+
+          <!-- LEFT TOP: verda.reading -->
+          <rect x="18" y="16" width="225" height="130" rx="7" fill="#ffffff" stroke="#098160" stroke-width="1.6"/>
+          <rect x="18" y="16" width="225" height="26" rx="7" fill="#098160"/>
+          <text x="130" y="33" text-anchor="middle" fill="#ffffff" font-size="10" font-weight="700">verda.reading (Histórico Sensores)</text>
+          <text x="28" y="56" fill="#098160" font-size="8.2" font-weight="700">PK  id : BIGSERIAL</text>
+          <text x="28" y="71" fill="#1d5fa7" font-size="8.2" font-weight="700">FK  device_id &rarr; verda.device(id)</text>
+          <text x="28" y="86" fill="#18342e" font-size="8.2">    moisture : DOUBLE PRECISION</text>
+          <text x="28" y="101" fill="#18342e" font-size="8.2">    temperature : DOUBLE PRECISION</text>
+          <text x="28" y="116" fill="#18342e" font-size="8.2">    water, ph : DOUBLE PRECISION</text>
+          <text x="28" y="131" fill="#18342e" font-size="8.2">    recorded_at : TIMESTAMPTZ</text>
+
+          <!-- LEFT BOTTOM: verda.alert -->
+          <rect x="18" y="172" width="225" height="144" rx="7" fill="#ffffff" stroke="#c17d22" stroke-width="1.6"/>
+          <rect x="18" y="172" width="225" height="26" rx="7" fill="#c17d22"/>
+          <text x="130" y="189" text-anchor="middle" fill="#ffffff" font-size="10" font-weight="700">verda.alert (Central de Alertas)</text>
+          <text x="28" y="212" fill="#8c560f" font-size="8.2" font-weight="700">PK  id : BIGSERIAL</text>
+          <text x="28" y="227" fill="#1d5fa7" font-size="8.2" font-weight="700">FK  device_id &rarr; verda.device(id)</text>
+          <text x="28" y="242" fill="#18342e" font-size="8.2">    kind : VARCHAR(30) [LOW_MOISTURE...]</text>
+          <text x="28" y="257" fill="#18342e" font-size="8.2">    level : VARCHAR(10) [high|medium|low]</text>
+          <text x="28" y="272" fill="#18342e" font-size="8.2">    title, message : VARCHAR</text>
+          <text x="28" y="287" fill="#18342e" font-size="8.2">    is_read : BOOLEAN</text>
+          <text x="28" y="302" fill="#18342e" font-size="8.2">    created_at, resolved_at : TIMESTAMPTZ</text>
+
+          <!-- RIGHT TOP: verda.irrigation_schedule -->
+          <rect x="612" y="16" width="230" height="144" rx="7" fill="#ffffff" stroke="#1d5fa7" stroke-width="1.6"/>
+          <rect x="612" y="16" width="230" height="26" rx="7" fill="#1d5fa7"/>
+          <text x="727" y="33" text-anchor="middle" fill="#ffffff" font-size="10" font-weight="700">verda.irrigation_schedule</text>
+          <text x="622" y="56" fill="#1d5fa7" font-size="8.2" font-weight="700">PK  id : BIGSERIAL</text>
+          <text x="622" y="71" fill="#1d5fa7" font-size="8.2" font-weight="700">FK  device_id &rarr; verda.device(id)</text>
+          <text x="622" y="86" fill="#18342e" font-size="8.2">    name : VARCHAR(80)</text>
+          <text x="622" y="101" fill="#18342e" font-size="8.2">    days : VARCHAR(20) [ISO 1=Seg..7=Dom]</text>
+          <text x="622" y="116" fill="#18342e" font-size="8.2">    start_time : TIME &bull; duration_min : INT</text>
+          <text x="622" y="131" fill="#18342e" font-size="8.2">    regime : VARCHAR(20) [garoa..forte]</text>
+          <text x="622" y="146" fill="#18342e" font-size="8.2">    enabled : BOOLEAN &bull; last_run_on : DATE</text>
+
+          <!-- RIGHT BOTTOM: verda.irrigation_log -->
+          <rect x="612" y="176" width="230" height="140" rx="7" fill="#ffffff" stroke="#5b42a6" stroke-width="1.6"/>
+          <rect x="612" y="176" width="230" height="26" rx="7" fill="#5b42a6"/>
+          <text x="727" y="193" text-anchor="middle" fill="#ffffff" font-size="10" font-weight="700">verda.irrigation_log (Ciclos)</text>
+          <text x="622" y="216" fill="#5b42a6" font-size="8.2" font-weight="700">PK  id : BIGSERIAL</text>
+          <text x="622" y="231" fill="#1d5fa7" font-size="8.2" font-weight="700">FK  device_id &rarr; verda.device(id)</text>
+          <text x="622" y="246" fill="#18342e" font-size="8.2">    started_at, ended_at : TIMESTAMPTZ</text>
+          <text x="622" y="261" fill="#18342e" font-size="8.2">    planned_minutes : INTEGER</text>
+          <text x="622" y="276" fill="#18342e" font-size="8.2">    mode : VARCHAR(12) [manual|agendada]</text>
+          <text x="622" y="291" fill="#18342e" font-size="8.2">    regime : VARCHAR(20)</text>
+          <text x="622" y="306" fill="#18342e" font-size="8.2">    schedule_name : VARCHAR(80)</text>
+
+          <!-- BOTTOM CENTER: verda.app_settings -->
+          <rect x="295" y="268" width="265" height="76" rx="7" fill="#ffffff" stroke="#526863" stroke-width="1.5"/>
+          <rect x="295" y="268" width="265" height="24" rx="7" fill="#526863"/>
+          <text x="427" y="284" text-anchor="middle" fill="#ffffff" font-size="9.5" font-weight="700">verda.app_settings (Configurações Gerais)</text>
+          <text x="307" y="305" fill="#18342e" font-size="8">PK id = 1 &bull; full_name, email, phone, role</text>
+          <text x="307" y="320" fill="#18342e" font-size="8">property_name, property_location, language, timezone</text>
+          <text x="307" y="335" fill="#18342e" font-size="8">notify_critical, notify_offline, notify_routines, notify_weekly</text>
+
+          <!-- Relationship Lines (1 to N) -->
+          <line x1="243" y1="80" x2="295" y2="80" stroke="#098160" stroke-width="2"/>
+          <text x="253" y="74" fill="#098160" font-size="8.5" font-weight="800">N</text>
+          <text x="283" y="74" fill="#0b463a" font-size="8.5" font-weight="800">1</text>
+
+          <line x1="243" y1="216" x2="295" y2="188" stroke="#c17d22" stroke-width="2"/>
+          <text x="253" y="206" fill="#c17d22" font-size="8.5" font-weight="800">N</text>
+          <text x="283" y="184" fill="#0b463a" font-size="8.5" font-weight="800">1</text>
+
+          <line x1="560" y1="80" x2="612" y2="80" stroke="#1d5fa7" stroke-width="2"/>
+          <text x="566" y="74" fill="#0b463a" font-size="8.5" font-weight="800">1</text>
+          <text x="598" y="74" fill="#1d5fa7" font-size="8.5" font-weight="800">N</text>
+
+          <line x1="560" y1="188" x2="612" y2="220" stroke="#5b42a6" stroke-width="2"/>
+          <text x="566" y="184" fill="#0b463a" font-size="8.5" font-weight="800">1</text>
+          <text x="598" y="211" fill="#5b42a6" font-size="8.5" font-weight="800">N</text>
+        </svg>

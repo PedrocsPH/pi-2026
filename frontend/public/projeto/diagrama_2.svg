@@ -1,0 +1,90 @@
+<svg viewBox="0 0 860 405" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <marker id="seqGreen" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+              <path d="M 0 1 L 10 5 L 0 9 z" fill="#098160"/>
+            </marker>
+            <marker id="seqBlue" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+              <path d="M 0 1 L 10 5 L 0 9 z" fill="#1d5fa7"/>
+            </marker>
+            <marker id="seqAmber" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+              <path d="M 0 1 L 10 5 L 0 9 z" fill="#c17d22"/>
+            </marker>
+          </defs>
+
+          <rect x="2" y="2" width="856" height="401" rx="10" fill="#f7fbf9" stroke="#bfdacf" stroke-width="1.5"/>
+
+          <!-- Lifeline Headers -->
+          <rect x="24" y="16" width="156" height="40" rx="6" fill="#0b463a"/>
+          <text x="102" y="34" text-anchor="middle" fill="#ffffff" font-size="10" font-weight="700">Arduino Uno / ESP32</text>
+          <text x="102" y="48" text-anchor="middle" fill="#b7f0d8" font-size="8">Sensores + Relé Bomba</text>
+
+          <rect x="252" y="16" width="156" height="40" rx="6" fill="#1d5fa7"/>
+          <text x="330" y="34" text-anchor="middle" fill="#ffffff" font-size="10" font-weight="700">Backend Spring Boot</text>
+          <text x="330" y="48" text-anchor="middle" fill="#d4e5fa" font-size="8">API REST (Porta 8080)</text>
+
+          <rect x="472" y="16" width="150" height="40" rx="6" fill="#5b42a6"/>
+          <text x="547" y="34" text-anchor="middle" fill="#ffffff" font-size="10" font-weight="700">Banco PostgreSQL</text>
+          <text x="547" y="48" text-anchor="middle" fill="#e1d9fa" font-size="8">Schema verda (5432)</text>
+
+          <rect x="678" y="16" width="158" height="40" rx="6" fill="#098160"/>
+          <text x="757" y="34" text-anchor="middle" fill="#ffffff" font-size="10" font-weight="700">Site / App no Celular</text>
+          <text x="757" y="48" text-anchor="middle" fill="#c7f5e2" font-size="8">React + Vite (Porta 8443)</text>
+
+          <!-- Lifelines -->
+          <line x1="102" y1="56" x2="102" y2="390" stroke="#0b463a" stroke-width="1.5" stroke-dasharray="4,4"/>
+          <line x1="330" y1="56" x2="330" y2="390" stroke="#1d5fa7" stroke-width="1.5" stroke-dasharray="4,4"/>
+          <line x1="547" y1="56" x2="547" y2="390" stroke="#5b42a6" stroke-width="1.5" stroke-dasharray="4,4"/>
+          <line x1="757" y1="56" x2="757" y2="390" stroke="#098160" stroke-width="1.5" stroke-dasharray="4,4"/>
+
+          <!-- Fase A Banner -->
+          <rect x="18" y="66" width="824" height="20" rx="4" fill="#e3f3ed"/>
+          <text x="28" y="80" fill="#0b463a" font-size="9" font-weight="700">FASE A — TELEMETRIA CONTÍNUA E ATUALIZAÇÃO AUTOMÁTICA DOS GRÁFICOS (A CADA 4s A 10s)</text>
+
+          <!-- Step 1 -->
+          <line x1="102" y1="104" x2="324" y2="104" stroke="#098160" stroke-width="2" marker-end="url(#seqGreen)"/>
+          <text x="216" y="98" text-anchor="middle" fill="#0b463a" font-size="8.2" font-weight="700">1. POST /api/ingest/ARD-IRR-0421/readings</text>
+          <text x="216" y="116" text-anchor="middle" fill="#3c5750" font-size="7.4">JSON: {"moisture":58.0, "temperature":25.4, "water":82.0}</text>
+
+          <!-- Step 2 -->
+          <line x1="330" y1="132" x2="541" y2="132" stroke="#1d5fa7" stroke-width="1.8" marker-end="url(#seqBlue)"/>
+          <text x="438" y="126" text-anchor="middle" fill="#1d5fa7" font-size="8" font-weight="700">2. INSERT reading &amp; UPDATE device</text>
+          <text x="438" y="144" text-anchor="middle" fill="#3c5750" font-size="7.4">Avalia limites (umidade &lt; minMoisture) e alertas</text>
+
+          <!-- Step 3 -->
+          <line x1="330" y1="162" x2="108" y2="162" stroke="#098160" stroke-width="1.8" stroke-dasharray="4,2" marker-end="url(#seqGreen)"/>
+          <text x="216" y="156" text-anchor="middle" fill="#098160" font-size="8" font-weight="700">3. Resposta 202 (DeviceCommandDto)</text>
+          <text x="216" y="174" text-anchor="middle" fill="#3c5750" font-size="7.4">{"irrigating": false, "regime": "leve", "pumpPower": 0}</text>
+
+          <!-- Step 4 (crosses lifeline 547 -> add clean backing rect) -->
+          <rect x="370" y="180" width="348" height="14" rx="3" fill="#f7fbf9"/>
+          <line x1="757" y1="196" x2="336" y2="196" stroke="#1d5fa7" stroke-width="1.8" marker-end="url(#seqBlue)"/>
+          <text x="544" y="191" text-anchor="middle" fill="#1d5fa7" font-size="8.2" font-weight="700">4. Polling a cada 5s: GET /api/dashboard &amp; GET /api/devices/ARD-IRR-0421</text>
+          <line x1="330" y1="212" x2="751" y2="212" stroke="#098160" stroke-width="1.8" stroke-dasharray="4,2" marker-end="url(#seqGreen)"/>
+          <rect x="382" y="215" width="324" height="13" rx="3" fill="#f7fbf9"/>
+          <text x="544" y="225" text-anchor="middle" fill="#0b463a" font-size="7.6">Retorna séries temporais atualizadas, médias, alertas e status em tempo real</text>
+
+          <!-- Fase B Banner -->
+          <rect x="18" y="238" width="824" height="20" rx="4" fill="#fbf0dc"/>
+          <text x="28" y="252" fill="#8c560f" font-size="9" font-weight="700">FASE B — ACIONAMENTO MANUAL PELO CELULAR E RESPOSTA FÍSICA DO ARDUINO</text>
+
+          <!-- Step 5 (crosses lifeline 547 -> add clean backing rect) -->
+          <rect x="348" y="262" width="392" height="14" rx="3" fill="#f7fbf9"/>
+          <line x1="757" y1="278" x2="336" y2="278" stroke="#c17d22" stroke-width="2" marker-end="url(#seqAmber)"/>
+          <text x="544" y="273" text-anchor="middle" fill="#8c560f" font-size="8.2" font-weight="700">5. Toque em "Iniciar Irrigação" no Celular: POST /api/devices/ARD-IRR-0421/irrigation/start</text>
+          <rect x="410" y="281" width="268" height="13" rx="3" fill="#f7fbf9"/>
+          <text x="544" y="291" text-anchor="middle" fill="#3c5750" font-size="7.5">Body: {"minutes": 15, "regime": "forte"} (Potência 100% &bull; 20 mm/h)</text>
+
+          <!-- Step 6 -->
+          <line x1="330" y1="308" x2="541" y2="308" stroke="#1d5fa7" stroke-width="1.8" marker-end="url(#seqBlue)"/>
+          <text x="438" y="302" text-anchor="middle" fill="#1d5fa7" font-size="8" font-weight="700">6. Grava irrigating_until e irrigation_log</text>
+
+          <!-- Step 7 -->
+          <line x1="102" y1="334" x2="324" y2="334" stroke="#098160" stroke-width="1.8" marker-end="url(#seqGreen)"/>
+          <text x="216" y="328" text-anchor="middle" fill="#0b463a" font-size="7.8" font-weight="700">7. Consulta rápida: GET /api/ingest/ARD-IRR-0421/command</text>
+
+          <!-- Step 8 -->
+          <line x1="330" y1="358" x2="108" y2="358" stroke="#c17d22" stroke-width="2.2" marker-end="url(#seqAmber)"/>
+          <text x="216" y="352" text-anchor="middle" fill="#8c560f" font-size="8" font-weight="700">8. Comando: {"irrigating": true, "pumpPower": 100}</text>
+          <rect x="112" y="364" width="210" height="16" rx="4" fill="#e3f3ed"/>
+          <text x="217" y="375" text-anchor="middle" fill="#0b463a" font-size="7.6" font-weight="700">Acende LED (Pino 13) e liga Relé Bomba (Pino 7)!</text>
+        </svg>

@@ -1,0 +1,33 @@
+services:
+  irrigacao-postgres:
+    image: postgres:16-alpine
+    container_name: irrigacao-postgres
+    environment:
+      POSTGRES_DB: irrigacao
+      POSTGRES_USER: irrigacao
+      POSTGRES_PASSWORD: irrigacao
+    ports:
+      - "5432:5432"
+    volumes:
+      - irrigacao-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U irrigacao -d irrigacao"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build: ./backend
+    depends_on:
+      irrigacao-postgres:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+    environment:
+      DB_URL: jdbc:postgresql://irrigacao-postgres:5432/irrigacao?currentSchema=verda
+      DB_USER: irrigacao
+      DB_PASSWORD: irrigacao
+      CORS_ORIGENS: http://localhost:5173,http://localhost:8443,http://localhost:3000
+
+volumes:
+  irrigacao-db-data:

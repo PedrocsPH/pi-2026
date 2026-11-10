@@ -1,0 +1,145 @@
+<svg viewBox="0 0 860 390" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <marker id="arrowGreen" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+              <path d="M 0 1 L 10 5 L 0 9 z" fill="#098160"/>
+            </marker>
+            <marker id="arrowBlue" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+              <path d="M 0 1 L 10 5 L 0 9 z" fill="#1d5fa7"/>
+            </marker>
+            <marker id="arrowPurple" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+              <path d="M 0 1 L 10 5 L 0 9 z" fill="#5b42a6"/>
+            </marker>
+          </defs>
+
+          <!-- Background Canvas -->
+          <rect x="2" y="2" width="856" height="386" rx="10" fill="#f7fbf9" stroke="#bfdacf" stroke-width="1.5"/>
+
+          <!-- CAMADA 1: HARDWARE IoT -->
+          <rect x="16" y="18" width="182" height="340" rx="8" fill="#ffffff" stroke="#0b463a" stroke-width="1.8"/>
+          <rect x="16" y="18" width="182" height="32" rx="8" fill="#0b463a"/>
+          <text x="107" y="38" text-anchor="middle" fill="#ffffff" font-size="10.5" font-weight="700">1. CAMADA FÍSICA (IoT)</text>
+
+          <!-- Sensores Box -->
+          <rect x="26" y="62" width="162" height="80" rx="6" fill="#eaf6f2" stroke="#6dbda3" stroke-width="1.2"/>
+          <text x="107" y="79" text-anchor="middle" fill="#0b463a" font-size="9.5" font-weight="700">Sensores de Campo</text>
+          <text x="34" y="95" fill="#18342e" font-size="8.2">&bull; Umidade do Solo (A0 / GPIO34)</text>
+          <text x="34" y="109" fill="#18342e" font-size="8.2">&bull; Temperatura DHT11 (GPIO4)</text>
+          <text x="34" y="123" fill="#18342e" font-size="8.2">&bull; Nível de Água (GPIO35)</text>
+          <text x="34" y="137" fill="#18342e" font-size="8.2">&bull; Sonda de pH (GPIO32)</text>
+
+          <!-- Microcontroladores Box -->
+          <rect x="26" y="156" width="162" height="90" rx="6" fill="#e1f4f7" stroke="#0e91ac" stroke-width="1.4"/>
+          <text x="107" y="173" text-anchor="middle" fill="#085a6c" font-size="9.5" font-weight="700">Microcontroladores (.ino)</text>
+          <text x="34" y="190" fill="#18342e" font-size="8.2" font-weight="600">Opção A: ESP32 / ESP8266</text>
+          <text x="40" y="202" fill="#3a5750" font-size="7.8">Wi-Fi nativo (HTTPClient.h)</text>
+          <text x="34" y="219" fill="#18342e" font-size="8.2" font-weight="600">Opção B: Arduino Uno R3</text>
+          <text x="40" y="231" fill="#3a5750" font-size="7.8">Cabo USB (Serial 9600 bps)</text>
+
+          <!-- Atuadores Box -->
+          <rect x="26" y="260" width="162" height="86" rx="6" fill="#fbf0dc" stroke="#d18a2b" stroke-width="1.2"/>
+          <text x="107" y="277" text-anchor="middle" fill="#8c560f" font-size="9.5" font-weight="700">Atuadores &amp; Display</text>
+          <text x="34" y="293" fill="#18342e" font-size="8.2">&bull; Módulo Relé 5V (Pino 7 / GPIO26)</text>
+          <text x="34" y="307" fill="#18342e" font-size="8.2">&bull; Mini Bomba Submersível 5V DC</text>
+          <text x="34" y="321" fill="#18342e" font-size="8.2">&bull; LED Status (Pino 13 / GPIO2)</text>
+          <text x="34" y="335" fill="#18342e" font-size="8.2">&bull; Display LCD 16x2 (Bancada)</text>
+
+          <!-- Internal Arrows Layer 1 -->
+          <line x1="107" y1="142" x2="107" y2="154" stroke="#098160" stroke-width="1.5" marker-end="url(#arrowGreen)"/>
+          <line x1="107" y1="246" x2="107" y2="258" stroke="#098160" stroke-width="1.5" marker-end="url(#arrowGreen)"/>
+
+          <!-- CAMADA 2: FRONTEND WEB & MOBILE -->
+          <rect x="236" y="18" width="186" height="340" rx="8" fill="#ffffff" stroke="#098160" stroke-width="1.8"/>
+          <rect x="236" y="18" width="186" height="32" rx="8" fill="#098160"/>
+          <text x="329" y="38" text-anchor="middle" fill="#ffffff" font-size="10.5" font-weight="700">2. FRONTEND (PORTA 8443)</text>
+
+          <rect x="246" y="62" width="166" height="70" rx="6" fill="#eaf6f2" stroke="#6dbda3" stroke-width="1.2"/>
+          <text x="329" y="79" text-anchor="middle" fill="#0b463a" font-size="9.5" font-weight="700">Acesso Multiplataforma</text>
+          <text x="254" y="95" fill="#18342e" font-size="8.2">&bull; Computador (localhost:8443)</text>
+          <text x="254" y="109" fill="#18342e" font-size="8.2">&bull; Celular Web App / PWA (Wi-Fi)</text>
+          <text x="254" y="123" fill="#18342e" font-size="8.2">&bull; Atualização ao vivo a cada 5s</text>
+
+          <rect x="246" y="144" width="166" height="130" rx="6" fill="#f4faf7" stroke="#8fc8b7" stroke-width="1.2"/>
+          <text x="329" y="161" text-anchor="middle" fill="#0b463a" font-size="9.5" font-weight="700">Módulos React (App.tsx)</text>
+          <text x="254" y="177" fill="#18342e" font-size="8.2">&bull; Visão Geral (Dashboard &amp; KPIs)</text>
+          <text x="254" y="191" fill="#18342e" font-size="8.2">&bull; Meus Dispositivos (4 sensores)</text>
+          <text x="254" y="205" fill="#18342e" font-size="8.2">&bull; Controle Manual &amp; Regimes</text>
+          <text x="254" y="219" fill="#18342e" font-size="8.2">&bull; Programações de Rega Semanal</text>
+          <text x="254" y="233" fill="#18342e" font-size="8.2">&bull; Central de Alertas Críticos</text>
+          <text x="254" y="247" fill="#18342e" font-size="8.2">&bull; Seção Sobre o Projeto (Artigo PI)</text>
+          <text x="254" y="261" fill="#18342e" font-size="8.2">&bull; Parceria Agricultura Familiar</text>
+
+          <rect x="246" y="286" width="166" height="60" rx="6" fill="#eaf1fb" stroke="#3978ca" stroke-width="1.2"/>
+          <text x="329" y="303" text-anchor="middle" fill="#1d5fa7" font-size="9.2" font-weight="700">Cliente HTTP &amp; Proxy Vite</text>
+          <text x="254" y="319" fill="#18342e" font-size="8">src/api.ts (fetch JSON REST)</text>
+          <text x="254" y="333" fill="#18342e" font-size="8">Proxy /api &rarr; 127.0.0.1:8080</text>
+
+          <!-- CAMADA 3: BACKEND SPRING BOOT -->
+          <rect x="464" y="18" width="192" height="340" rx="8" fill="#ffffff" stroke="#1d5fa7" stroke-width="1.8"/>
+          <rect x="464" y="18" width="192" height="32" rx="8" fill="#1d5fa7"/>
+          <text x="560" y="38" text-anchor="middle" fill="#ffffff" font-size="10.5" font-weight="700">3. BACKEND (PORTA 8080)</text>
+
+          <rect x="474" y="62" width="172" height="92" rx="6" fill="#eaf1fb" stroke="#6a9bd8" stroke-width="1.2"/>
+          <text x="560" y="79" text-anchor="middle" fill="#1d5fa7" font-size="9.2" font-weight="700">Controllers REST (Spring Web)</text>
+          <text x="482" y="95" fill="#18342e" font-size="8">&bull; IngestController (/api/ingest)</text>
+          <text x="482" y="108" fill="#18342e" font-size="8">&bull; DeviceController (/api/devices)</text>
+          <text x="482" y="121" fill="#18342e" font-size="8">&bull; DashboardController (/dashboard)</text>
+          <text x="482" y="134" fill="#18342e" font-size="8">&bull; IrrigationController (/regimes)</text>
+          <text x="482" y="147" fill="#18342e" font-size="8">&bull; Alert &amp; Settings Controllers</text>
+
+          <rect x="474" y="166" width="172" height="96" rx="6" fill="#f3f7fc" stroke="#8ab0df" stroke-width="1.2"/>
+          <text x="560" y="183" text-anchor="middle" fill="#1d5fa7" font-size="9.2" font-weight="700">Camada de Serviços &amp; Jobs</text>
+          <text x="482" y="199" fill="#18342e" font-size="8">&bull; IngestService (Alertas + AutoRega)</text>
+          <text x="482" y="212" fill="#18342e" font-size="8">&bull; IrrigationService (PWM / Regimes)</text>
+          <text x="482" y="225" fill="#18342e" font-size="8">&bull; ScheduledIrrigationJob (20s)</text>
+          <text x="482" y="238" fill="#18342e" font-size="8">&bull; IrrigationScheduler (Ciclos 15s)</text>
+          <text x="482" y="251" fill="#18342e" font-size="8">&bull; OfflineSweepJob &amp; DemoSeedRunner</text>
+
+          <rect x="474" y="274" width="172" height="72" rx="6" fill="#eef5f3" stroke="#7aa899" stroke-width="1.2"/>
+          <text x="560" y="291" text-anchor="middle" fill="#0b463a" font-size="9.2" font-weight="700">Acesso a Dados (Repositories)</text>
+          <text x="482" y="307" fill="#18342e" font-size="8">&bull; Spring JdbcTemplate (SQL Puro)</text>
+          <text x="482" y="320" fill="#18342e" font-size="8">&bull; Pool de Conexões HikariCP</text>
+          <text x="482" y="333" fill="#18342e" font-size="8">&bull; Inicialização automática schema.sql</text>
+
+          <!-- CAMADA 4: BANCO DE DADOS POSTGRESQL -->
+          <rect x="694" y="18" width="150" height="340" rx="8" fill="#ffffff" stroke="#5b42a6" stroke-width="1.8"/>
+          <rect x="694" y="18" width="150" height="32" rx="8" fill="#5b42a6"/>
+          <text x="769" y="38" text-anchor="middle" fill="#ffffff" font-size="10.2" font-weight="700">4. BANCO (PORTA 5432)</text>
+
+          <rect x="704" y="62" width="130" height="54" rx="6" fill="#f0ecfb" stroke="#9b84df" stroke-width="1.2"/>
+          <text x="769" y="79" text-anchor="middle" fill="#462f8a" font-size="9.2" font-weight="700">PostgreSQL 16</text>
+          <text x="769" y="93" text-anchor="middle" fill="#18342e" font-size="8">Container Docker</text>
+          <text x="769" y="106" text-anchor="middle" fill="#18342e" font-size="8">Schema: verda</text>
+
+          <rect x="704" y="128" width="130" height="218" rx="6" fill="#faf8ff" stroke="#b3a1e8" stroke-width="1.2"/>
+          <text x="769" y="145" text-anchor="middle" fill="#462f8a" font-size="9.2" font-weight="700">Tabelas SQL</text>
+          <text x="712" y="164" fill="#18342e" font-size="8.2" font-weight="600">1. verda.device</text>
+          <text x="717" y="176" fill="#5a706a" font-size="7.4">Cadastro e estado atual</text>
+          <text x="712" y="193" fill="#18342e" font-size="8.2" font-weight="600">2. verda.reading</text>
+          <text x="717" y="205" fill="#5a706a" font-size="7.4">Série histórica sensores</text>
+          <text x="712" y="222" fill="#18342e" font-size="8.2" font-weight="600">3. irrigation_schedule</text>
+          <text x="717" y="234" fill="#5a706a" font-size="7.4">Rotinas por dia/horário</text>
+          <text x="712" y="251" fill="#18342e" font-size="8.2" font-weight="600">4. irrigation_log</text>
+          <text x="717" y="263" fill="#5a706a" font-size="7.4">Histórico e lâmina (mm)</text>
+          <text x="712" y="280" fill="#18342e" font-size="8.2" font-weight="600">5. verda.alert</text>
+          <text x="717" y="292" fill="#5a706a" font-size="7.4">Alertas ativos/resolvidos</text>
+          <text x="712" y="309" fill="#18342e" font-size="8.2" font-weight="600">6. app_settings</text>
+          <text x="717" y="321" fill="#5a706a" font-size="7.4">Perfil e propriedade</text>
+
+          <!-- Horizontal Bidirectional Arrows Between Adjacent Columns -->
+          <!-- Layer 2 <-> Layer 3 -->
+          <line x1="422" y1="312" x2="462" y2="112" stroke="#1d5fa7" stroke-width="2" marker-start="url(#arrowBlue)" marker-end="url(#arrowBlue)"/>
+          <rect x="424" y="198" width="38" height="26" rx="4" fill="#eaf1fb" stroke="#1d5fa7" stroke-width="1"/>
+          <text x="443" y="209" text-anchor="middle" fill="#1d5fa7" font-size="7.2" font-weight="800">HTTP</text>
+          <text x="443" y="219" text-anchor="middle" fill="#1d5fa7" font-size="7" font-weight="700">/api/*</text>
+
+          <!-- Layer 3 <-> Layer 4 -->
+          <line x1="656" y1="310" x2="692" y2="235" stroke="#5b42a6" stroke-width="2" marker-start="url(#arrowPurple)" marker-end="url(#arrowPurple)"/>
+          <rect x="656" y="258" width="38" height="26" rx="4" fill="#f0ecfb" stroke="#5b42a6" stroke-width="1"/>
+          <text x="675" y="269" text-anchor="middle" fill="#462f8a" font-size="7.2" font-weight="800">JDBC</text>
+          <text x="675" y="279" text-anchor="middle" fill="#462f8a" font-size="7" font-weight="700">SQL</text>
+
+          <!-- Layer 1 <-> Layer 3 (Bottom Bus for IoT Ingest & Command) -->
+          <path d="M 188 201 L 216 201 L 216 373 L 444 373 L 444 95 L 472 95" fill="none" stroke="#098160" stroke-width="2.2" stroke-dasharray="5,3" marker-start="url(#arrowGreen)" marker-end="url(#arrowGreen)"/>
+          <rect x="235" y="363" width="192" height="19" rx="4" fill="#0b463a"/>
+          <text x="331" y="376" text-anchor="middle" fill="#ffffff" font-size="8" font-weight="700">POST /readings &amp; GET /command</text>
+        </svg>

@@ -1,0 +1,32 @@
+server:
+  port: ${PORT:8080}
+
+spring:
+  application:
+    name: irrigacao-iot-platform
+  datasource:
+    # O schema "verda" isola as tabelas desta API de qualquer tabela antiga no mesmo banco.
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/irrigacao?currentSchema=verda}
+    username: ${DB_USER:irrigacao}
+    password: ${DB_PASSWORD:irrigacao}
+  sql:
+    init:
+      mode: always            # executa schema.sql a cada start (é idempotente)
+      schema-locations: classpath:schema.sql
+
+irrigacao:
+  zona-horaria: America/Sao_Paulo
+  limites:
+    offline-minutos: 30           # sem leituras por mais que isso => dispositivo offline
+    agua-baixa-percentual: 40     # reservatório abaixo disso => alerta "Nível de água reduzido"
+    agua-minima-irrigacao-percentual: 10   # abaixo disso a irrigação não é iniciada
+  ingestao:
+    chave-api: ${INGEST_API_KEY:}  # se preenchida, o Arduino deve enviar o header X-Device-Key
+  cors:
+    origens: ${CORS_ORIGENS:http://localhost:5173,http://localhost:8443,http://localhost:3000}
+  seed:
+    demo: ${SEED_DEMO:true}        # cria os 4 dispositivos de exemplo (com 7 dias de histórico) se o banco estiver vazio
+  simulador:
+    ativo: ${SIMULADOR_ATIVO:true} # gera leituras a cada minuto; DESLIGUE quando ligar Arduinos de verdade
+    intervalo-ms: 60000
+    ignorar: ""          # este dispositivo de exemplo fica offline de propósito
