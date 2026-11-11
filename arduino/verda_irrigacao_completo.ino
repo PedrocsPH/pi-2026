@@ -1,26 +1,4 @@
-/*
- * ============================================================================
- * PLATAFORMA VERDA — FIRMWARE BLINDADO CONTRA RUÍDO DA BOMBA (ANTI-TRAVAMENTO)
- * ============================================================================
- * Escola de Ensino Médio Senac Distrito Criativo — Projeto Integrador 2026
- * Autores: Dori A. C. V. Z. Aguzzoli, Pedro H. T. de Andrade
- *
- * POR QUE O ERRO ACONTECIA E COMO FOI RESOLVIDO:
- * - Quando a mini bomba gira no mesmo 5V do Arduino, o motor elétrico gera ruído
- *   na linha 5V. Se o Arduino tentar escrever no LCD I2C ENQUANTO o motor gira,
- *   o ruído corrompe os bytes do I2C (mostrando letras codificadas) e trava a
- *   função Wire.endTransmission(), impedindo o Arduino de desligar a bomba!
- * - SOLUÇÃO DEFINITIVA:
- *   1. O Arduino escreve "Regando..." no LCD ANTES de acionar o relé da bomba.
- *   2. Enquanto o motor da bomba está girando, o barramento I2C fica em silêncio
- *      (protegido), então o LCD NUNCA recebe ruído e o Arduino NUNCA trava!
- *   3. Ao desligar a bomba, o Arduino desliga o relé PRIMEIRO, espera 300ms para
- *      a energia estabilizar e só então volta a atualizar o LCD!
- *   4. Inclui Timeout de Hardware no I2C (Wire.setWireTimeout) e trava de segurança.
- * ============================================================================
- */
-
-#include <Wire.h>
+﻿#include <Wire.h>
 #include <LiquidCrystal.h>
 
 LiquidCrystal lcdParalelo(12, 11, 5, 4, 3, 2);
@@ -31,29 +9,31 @@ const int PIN_LED_STATUS     = LED_BUILTIN; // LED "L" (pino 13)
 const int LEITURA_SOLO_SECO  = 980;
 const int LEITURA_SOLO_UMIDO = 320;
 
-const bool RELE_ATIVO_EM_LOW          = true;
-const int  LIMITE_UMIDADE_MIN         = 40;
-const bool IRRIGACAO_AUTOMATICA_LOCAL = false; // Obedece ao Manual/Auto do site
-const int  GATILHO_REGA_AUTO_PCT      = 40;
+const bool RELE_ATIVO_EM_LOW = true;
 
-// Tempo máximo sem receber sinal "LIGA" antes de desligar por segurança (10 segundos)
-const unsigned long TIMEOUT_SEGURANCA_BOMBA_MS = 10000;
+int  limiteUmidadeMin          = 40;
+bool modoAutoRemoto            = false;
+bool bombaLigada               = false;
+bool comandoRemotoAtivo        = false;
+bool bloqueioAutoSoloUmido     = false;
 
-bool  bombaLigada          = false;
-bool  comandoRemotoAtivo   = false;
-bool  bloqueioManualRemoto = false;
-float umidadeAtual         = 55.0;
-float temperaturaAtual     = 25.4;
-float nivelAguaAtual       = 82.0;
-float phAtual              = 6.5;
+int  adcSemMotor               = 980;
+int  offsetMotorAdc            = 0;
+int  contagemSoloUmidoComBomba = 0;
+unsigned long instanteLigouBombaMs = 0;
+
+float umidadeAtual             = 55.0;
+float temperaturaAtual         = 25.4;
+float nivelAguaAtual           = 82.0;
+float phAtual                  = 6.5;
+
+const unsigned long TIMEOUT_SEGURANCA_BOMBA_MS = 60000;
+const unsigned long TEMPO_MINIMO_REGA_AUTO_MS  = 2000;
 
 unsigned long ultimoEnvioMs       = 0;
 unsigned long ultimoDisplayMs     = 0;
 unsigned long ultimoComandoLigaMs = 0;
 
-// ============================================================================
-// DRIVER NATIVO PARA MÓDULO I2C DO LCD COM TIMEOUT ANTI-TRAVAMENTO
-// ============================================================================
 byte enderecoI2C = 0x27;
 bool i2cEncontrado = false;
 const byte LCD_BACKLIGHT = 0x08;
@@ -120,7 +100,7 @@ void inicializarLcdI2C() {
   Wire.begin();
   Wire.setClock(50000);
 #if defined(WIRE_HAS_TIMEOUT)
-  Wire.setWireTimeout(3000, true); // Impede o Arduino de travar se houver ruído no I2C
+  Wire.setWireTimeout(3000, true);
 #endif
 
   for (byte addr = 0x20; addr <= 0x3F; addr++) {
@@ -142,9 +122,6 @@ void inicializarLcdI2C() {
   delay(3);
 }
 
-// ============================================================================
-// ATUALIZAÇÃO SEGURA DO DISPLAY LCD (SÓ ESCREVE COM A ENERGIA ESTÁVEL)
-// ============================================================================
 void escreverTextoLCD(bool mostrandoRega) {
   String linha1 = "Umidade: " + String((int)round(umidadeAtual)) + " %     ";
   linha1 = linha1.substring(0, 16);
@@ -152,8 +129,9 @@ void escreverTextoLCD(bool mostrandoRega) {
   String linha2;
   if (mostrandoRega) {
     linha2 = "   Regando...   ";
-  } else if (umidadeAtual < LIMITE_UMIDADE_MIN) {
-    linha2 = "Solo Seco! (<40)";
+  } else if (umidadeAtual < limiteUmidadeMin) {
+    linha2 = "Solo Seco (<" + String(limiteUmidadeMin) + "%) ";
+    linha2 = linha2.substring(0, 16);
   } else {
     linha2 = "Solo Ideal (OK) ";
   }
@@ -169,17 +147,33 @@ void escreverTextoLCD(bool mostrandoRega) {
   lcdParalelo.print(linha2);
 }
 
-float lerUmidadeSoloReal() {
-  long soma = 0;
-  for (int i = 0; i < 10; i++) {
-    soma += analogRead(PIN_SENSOR_UMIDADE);
-    delay(4);
+int lerAdcMediana() {
+  int amostras[16];
+  for (int i = 0; i < 16; i++) {
+    amostras[i] = analogRead(PIN_SENSOR_UMIDADE);
+    delayMicroseconds(1500);
   }
-  int leituraBruta = (int)(soma / 10);
-  if (leituraBruta < 25)   return 95.0;
-  if (leituraBruta > 1005) return 3.0;
+  for (int i = 0; i < 15; i++) {
+    for (int j = i + 1; j < 16; j++) {
+      if (amostras[j] < amostras[i]) {
+        int tmp = amostras[i];
+        amostras[i] = amostras[j];
+        amostras[j] = tmp;
+      }
+    }
+  }
+  long soma = 0;
+  for (int i = 4; i < 12; i++) {
+    soma += amostras[i];
+  }
+  return (int)(soma / 8);
+}
 
-  long pctMapeado = map(leituraBruta, LEITURA_SOLO_SECO, LEITURA_SOLO_UMIDO, 0, 1000);
+float converterAdcParaPorcentagem(int leituraAdc) {
+  if (leituraAdc > 1005) return 3.0;
+  if (leituraAdc < 120)  return 95.0;
+
+  long pctMapeado = map(leituraAdc, LEITURA_SOLO_SECO, LEITURA_SOLO_UMIDO, 0, 1000);
   float pct = pctMapeado / 10.0;
   if (pct < 0.0)   pct = 0.0;
   if (pct > 100.0) pct = 100.0;
@@ -195,45 +189,37 @@ void acionarPinoRele(bool ligar) {
   }
 }
 
-// ============================================================================
-// CONTROLE BLINDADO DA BOMBA (CONGELA O I2C DURANTE O GIRO DO MOTOR)
-// ============================================================================
 void atualizarHardwareBomba(bool ligar) {
   if (ligar && !bombaLigada) {
-    // 1. ANTES de ligar o motor, escreve "Regando..." no LCD enquanto o 5V está limpo!
+    adcSemMotor = lerAdcMediana();
+    umidadeAtual = converterAdcParaPorcentagem(adcSemMotor);
+
     escreverTextoLCD(true);
     delay(40);
-    // 2. Agora aciona o relé da bomba (e não toca mais no LCD enquanto ela gira)
+
     bombaLigada = true;
+    contagemSoloUmidoComBomba = 0;
+    instanteLigouBombaMs = millis();
     acionarPinoRele(true);
+
+    delay(400);
+    int adcLogoAposLigar = lerAdcMediana();
+    int queda = adcSemMotor - adcLogoAposLigar;
+    if (queda > 0 && queda < 450) {
+      offsetMotorAdc = queda;
+    } else {
+      offsetMotorAdc = 0;
+    }
   } else if (!ligar && bombaLigada) {
-    // 1. PRIMEIRO desliga o relé da bomba para cortar o ruído do motor
     bombaLigada = false;
+    contagemSoloUmidoComBomba = 0;
     acionarPinoRele(false);
-    // 2. Espera 300ms para o motor parar e o 5V estabilizar
+
     delay(300);
-    // 3. Realigna o LCD e mostra o estado atualizado sem nenhum caractere estranho!
+    adcSemMotor = lerAdcMediana();
+    umidadeAtual = converterAdcParaPorcentagem(adcSemMotor);
     ressincronizarLcdI2C();
     escreverTextoLCD(false);
-  }
-}
-
-void lerComandoSerial() {
-  while (Serial.available() > 0) {
-    String cmd = Serial.readStringUntil('\n');
-    cmd.trim();
-    cmd.toUpperCase();
-
-    if (cmd.indexOf("DESLIGA") >= 0 || cmd.indexOf("PARAR") >= 0 || cmd.indexOf("STOP") >= 0) {
-      comandoRemotoAtivo = false;
-      bloqueioManualRemoto = true;
-      atualizarHardwareBomba(false);
-    } else if (cmd.indexOf("LIGA") >= 0) {
-      comandoRemotoAtivo = true;
-      bloqueioManualRemoto = false;
-      ultimoComandoLigaMs = millis();
-      atualizarHardwareBomba(true);
-    }
   }
 }
 
@@ -249,6 +235,48 @@ void enviarLeiturasSerial() {
   Serial.println("}");
 }
 
+void atualizarParametrosDoComando(const String& cmd) {
+  if (cmd.indexOf("AUTO") >= 0) {
+    modoAutoRemoto = true;
+  } else if (cmd.indexOf("MANUAL") >= 0) {
+    modoAutoRemoto = false;
+    bloqueioAutoSoloUmido = false;
+  }
+
+  int ultimoDoisPontos = cmd.lastIndexOf(':');
+  if (ultimoDoisPontos > 0 && ultimoDoisPontos < (int)cmd.length() - 1) {
+    int valorLimite = cmd.substring(ultimoDoisPontos + 1).toInt();
+    if (valorLimite >= 5 && valorLimite <= 95) {
+      limiteUmidadeMin = valorLimite;
+    }
+  }
+}
+
+void lerComandoSerial() {
+  while (Serial.available() > 0) {
+    String cmd = Serial.readStringUntil('\n');
+    cmd.trim();
+    cmd.toUpperCase();
+    if (cmd.length() == 0) continue;
+
+    atualizarParametrosDoComando(cmd);
+
+    if (cmd.indexOf("DESLIGA") >= 0 || cmd.indexOf("PARAR") >= 0 || cmd.indexOf("STOP") >= 0) {
+      comandoRemotoAtivo = false;
+      atualizarHardwareBomba(false);
+    } else if (cmd.indexOf("LIGA") >= 0) {
+      if (modoAutoRemoto && (bloqueioAutoSoloUmido || (!bombaLigada && umidadeAtual >= limiteUmidadeMin))) {
+        comandoRemotoAtivo = false;
+        atualizarHardwareBomba(false);
+      } else {
+        comandoRemotoAtivo = true;
+        ultimoComandoLigaMs = millis();
+        atualizarHardwareBomba(true);
+      }
+    }
+  }
+}
+
 void setup() {
   Serial.begin(9600);
   pinMode(PIN_SENSOR_UMIDADE, INPUT);
@@ -256,11 +284,14 @@ void setup() {
   pinMode(PIN_RELE_BOMBA, OUTPUT);
   acionarPinoRele(false);
 
+  adcSemMotor = lerAdcMediana();
+  umidadeAtual = converterAdcParaPorcentagem(adcSemMotor);
+
   inicializarLcdI2C();
   lcdI2CPosicionar(0, 0);
   lcdI2CImprimir("Plataforma Verda");
   lcdI2CPosicionar(0, 1);
-  lcdI2CImprimir("Iniciando IoT...");
+  lcdI2CImprimir("Modo Manual Ini.");
 
   lcdParalelo.begin(16, 2);
   lcdParalelo.setCursor(0, 0);
@@ -279,39 +310,54 @@ void loop() {
 
   lerComandoSerial();
 
-  // Trava de segurança: se a bomba ficou ligada e a USB perdeu contato por 10s, desliga sozinha!
   if (comandoRemotoAtivo && (agora - ultimoComandoLigaMs >= TIMEOUT_SEGURANCA_BOMBA_MS)) {
     comandoRemotoAtivo = false;
     atualizarHardwareBomba(false);
   }
 
-  if (agora - ultimoDisplayMs >= 1000) {
+  if (agora - ultimoDisplayMs >= 500) {
     ultimoDisplayMs = agora;
 
-    // Só lê o sensor e escreve no LCD I2C quando o motor da bomba estiver DESLIGADO!
-    // Isso impede 100% que o ruído do motor embaralhe o LCD ou trave o Arduino.
     if (!bombaLigada) {
-      umidadeAtual     = lerUmidadeSoloReal();
+      adcSemMotor      = lerAdcMediana();
+      umidadeAtual     = converterAdcParaPorcentagem(adcSemMotor);
       temperaturaAtual = 25.8;
       nivelAguaAtual   = 82.0;
 
-      if (umidadeAtual >= LIMITE_UMIDADE_MIN) {
-        bloqueioManualRemoto = false;
+      if (umidadeAtual < limiteUmidadeMin) {
+        bloqueioAutoSoloUmido = false;
       }
 
-      if (IRRIGACAO_AUTOMATICA_LOCAL && !bloqueioManualRemoto && umidadeAtual < GATILHO_REGA_AUTO_PCT) {
-        ultimoComandoLigaMs = agora;
-        atualizarHardwareBomba(true);
-      } else {
-        escreverTextoLCD(false);
-      }
+      escreverTextoLCD(false);
     } else {
+      int adcComMotor   = lerAdcMediana();
+      int adcCompensado = adcComMotor + offsetMotorAdc;
+      if (adcCompensado > 1023) adcCompensado = 1023;
+
+      umidadeAtual     = converterAdcParaPorcentagem(adcCompensado);
       temperaturaAtual = 24.4;
       nivelAguaAtual   = 79.0;
+
+      bool tempoMinimoCumprido = (agora - instanteLigouBombaMs) >= TEMPO_MINIMO_REGA_AUTO_MS;
+      if (tempoMinimoCumprido && umidadeAtual >= limiteUmidadeMin) {
+        contagemSoloUmidoComBomba++;
+      } else {
+        contagemSoloUmidoComBomba = 0;
+      }
+
+      if (contagemSoloUmidoComBomba >= 3) {
+        if (modoAutoRemoto) {
+          comandoRemotoAtivo = false;
+          bloqueioAutoSoloUmido = true;
+          atualizarHardwareBomba(false);
+        }
+        ultimoEnvioMs = agora;
+        enviarLeiturasSerial();
+      }
     }
   }
 
-  if (agora - ultimoEnvioMs >= 4000) {
+  if (agora - ultimoEnvioMs >= 1800) {
     ultimoEnvioMs = agora;
     enviarLeiturasSerial();
   }
