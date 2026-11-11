@@ -1,5 +1,15 @@
-﻿#include <Wire.h>
+﻿/*
+ * ============================================================================
+ * PLATAFORMA VERDA — FIRMWARE DEFINITIVO COM PROTEÇÃO EEPROM ANTI-RESET (5V)
+ * ============================================================================
+ * Escola de Ensino Médio Senac Distrito Criativo — Projeto Integrador 2026
+ * Autores: Dori A. C. V. Z. Aguzzoli, Pedro H. T. de Andrade
+ * ============================================================================
+ */
+
+#include <Wire.h>
 #include <LiquidCrystal.h>
+#include <EEPROM.h>
 
 LiquidCrystal lcdParalelo(12, 11, 5, 4, 3, 2);
 
@@ -10,6 +20,13 @@ const int LEITURA_SOLO_SECO  = 980;
 const int LEITURA_SOLO_UMIDO = 320;
 
 const bool RELE_ATIVO_EM_LOW = true;
+
+// Endereços da memória EEPROM para segurar o relé firme mesmo se o 5V oscilar
+const int EEPROM_ADDR_BOMBA   = 0;
+const int EEPROM_ADDR_AUTO    = 1;
+const int EEPROM_ADDR_LIMITE  = 2;
+const int EEPROM_ADDR_ADC_LOW = 3;
+const int EEPROM_ADDR_ADC_HI  = 4;
 
 int  limiteUmidadeMin          = 40;
 bool modoAutoRemoto            = false;
@@ -36,6 +53,9 @@ unsigned long ultimoEnvioMs       = 0;
 unsigned long ultimoDisplayMs     = 0;
 unsigned long ultimoComandoLigaMs = 0;
 
+// ============================================================================
+// DRIVER NATIVO PARA MÓDULO I2C DO LCD COM PROTEÇÃO CONTRA RUÍDO DO MOTOR
+// ============================================================================
 byte enderecoI2C = 0x27;
 bool i2cEncontrado = false;
 const byte LCD_BACKLIGHT = 0x08;
@@ -98,7 +118,7 @@ void ressincronizarLcdI2C() {
   lcdI2CComando(0x06);
 }
 
-void inicializarLcdI2C() {
+void inicializarLcdI2C(bool limparTela) {
   Wire.begin();
   Wire.setClock(50000);
 #if defined(WIRE_HAS_TIMEOUT)
@@ -118,10 +138,12 @@ void inicializarLcdI2C() {
     i2cEncontrado = true;
   }
 
-  delay(50);
-  ressincronizarLcdI2C();
-  lcdI2CComando(0x01);
-  delay(3);
+  if (limparTela) {
+    delay(40);
+    ressincronizarLcdI2C();
+    lcdI2CComando(0x01);
+    delay(3);
+  }
 }
 
 void escreverTextoLCD(bool mostrandoRega) {
@@ -191,35 +213,51 @@ void acionarPinoRele(bool ligar) {
   }
 }
 
+void salvarEstadoEeprom(bool ligada) {
+  EEPROM.update(EEPROM_ADDR_BOMBA, ligada ? 1 : 0);
+  EEPROM.update(EEPROM_ADDR_AUTO, modoAutoRemoto ? 1 : 0);
+  EEPROM.update(EEPROM_ADDR_LIMITE, (byte)limiteUmidadeMin);
+  EEPROM.update(EEPROM_ADDR_ADC_LOW, (byte)(adcSemMotor & 0xFF));
+  EEPROM.update(EEPROM_ADDR_ADC_HI, (byte)((adcSemMotor >> 8) & 0xFF));
+}
+
 void atualizarHardwareBomba(bool ligar) {
   if (ligar && !bombaLigada) {
     adcSemMotor = lerAdcMediana();
     umidadeAntesDaBomba = converterAdcParaPorcentagem(adcSemMotor);
     umidadeAtual = umidadeAntesDaBomba;
 
+    // 1. Escreve "Regando..." no LCD e salva na EEPROM ANTES de ligar o motor!
     escreverTextoLCD(true);
-    delay(40);
+    salvarEstadoEeprom(true);
+    delay(30);
 
+    // 2. Aciona o relé da bomba
     bombaLigada = true;
     contagemSoloUmidoComBomba = 0;
     instanteLigouBombaMs = millis();
     acionarPinoRele(true);
 
-    // Mede a queda inicial de tensão da protoboard causada pelo motor (sem trava de 450!)
-    delay(500);
+    // 3. Mede a referência inicial com motor ligado
+    delay(250);
     adcComMotorBase = lerAdcMediana();
     int queda = adcSemMotor - adcComMotorBase;
     offsetMotorAdc = (queda > 0) ? (queda + 25) : 25;
   } else if (!ligar && bombaLigada) {
+    // 1. Limpa a EEPROM e desliga o relé PRIMEIRO
+    salvarEstadoEeprom(false);
     bombaLigada = false;
     contagemSoloUmidoComBomba = 0;
     acionarPinoRele(false);
 
+    // 2. Aguarda 350ms para o 5V estabilizar e atualiza a leitura limpa e o LCD
     delay(350);
     adcSemMotor = lerAdcMediana();
     umidadeAtual = converterAdcParaPorcentagem(adcSemMotor);
     ressincronizarLcdI2C();
     escreverTextoLCD(false);
+  } else if (!ligar && !bombaLigada) {
+    EEPROM.update(EEPROM_ADDR_BOMBA, 0);
   }
 }
 
@@ -278,31 +316,58 @@ void lerComandoSerial() {
 }
 
 void setup() {
-  Serial.begin(9600);
-  pinMode(PIN_SENSOR_UMIDADE, INPUT);
-  pinMode(PIN_LED_STATUS, OUTPUT);
+  // PRIMEIRA AÇÃO NO PRIMEIRO MICROSSEGUNDO: verifica se a bomba estava ligada antes de um micro-reset!
+  byte bombaEstavaLigada = EEPROM.read(EEPROM_ADDR_BOMBA);
   pinMode(PIN_RELE_BOMBA, OUTPUT);
-  acionarPinoRele(false);
+  pinMode(PIN_LED_STATUS, OUTPUT);
+  pinMode(PIN_SENSOR_UMIDADE, INPUT);
 
-  adcSemMotor = lerAdcMediana();
-  umidadeAtual = converterAdcParaPorcentagem(adcSemMotor);
-  umidadeAntesDaBomba = umidadeAtual;
+  if (bombaEstavaLigada == 1) {
+    // Mantém o relé ATIVO imediatamente para o motor não parar!
+    acionarPinoRele(true);
+    bombaLigada = true;
+    comandoRemotoAtivo = true;
+    modoAutoRemoto = (EEPROM.read(EEPROM_ADDR_AUTO) == 1);
+    byte limSalvo = EEPROM.read(EEPROM_ADDR_LIMITE);
+    if (limSalvo >= 5 && limSalvo <= 95) limiteUmidadeMin = limSalvo;
 
-  inicializarLcdI2C();
-  lcdI2CPosicionar(0, 0);
-  lcdI2CImprimir("Plataforma Verda");
-  lcdI2CPosicionar(0, 1);
-  lcdI2CImprimir("Modo Manual Ini.");
+    int adcSalvo = (int)EEPROM.read(EEPROM_ADDR_ADC_LOW) | ((int)EEPROM.read(EEPROM_ADDR_ADC_HI) << 8);
+    if (adcSalvo >= 100 && adcSalvo <= 1023) adcSemMotor = adcSalvo;
+    umidadeAntesDaBomba = converterAdcParaPorcentagem(adcSemMotor);
+    umidadeAtual = umidadeAntesDaBomba;
 
-  lcdParalelo.begin(16, 2);
-  lcdParalelo.setCursor(0, 0);
-  lcdParalelo.print("Plataforma Verda");
+    Serial.begin(9600);
+    inicializarLcdI2C(false);
+    ultimoComandoLigaMs = millis();
+    instanteLigouBombaMs = millis();
+    adcComMotorBase = lerAdcMediana();
+    int queda = adcSemMotor - adcComMotorBase;
+    offsetMotorAdc = (queda > 0) ? (queda + 25) : 25;
+  } else {
+    acionarPinoRele(false);
+    bombaLigada = false;
+    Serial.begin(9600);
 
-  for (int i = 0; i < 3; i++) {
-    digitalWrite(PIN_LED_STATUS, HIGH);
-    delay(150);
-    digitalWrite(PIN_LED_STATUS, LOW);
-    delay(150);
+    adcSemMotor = lerAdcMediana();
+    umidadeAtual = converterAdcParaPorcentagem(adcSemMotor);
+    umidadeAntesDaBomba = umidadeAtual;
+
+    inicializarLcdI2C(true);
+    lcdI2CPosicionar(0, 0);
+    lcdI2CImprimir("Plataforma Verda");
+    lcdI2CPosicionar(0, 1);
+    lcdI2CImprimir("Modo Manual Ini.");
+
+    lcdParalelo.begin(16, 2);
+    lcdParalelo.setCursor(0, 0);
+    lcdParalelo.print("Plataforma Verda");
+
+    for (int i = 0; i < 3; i++) {
+      digitalWrite(PIN_LED_STATUS, HIGH);
+      delay(150);
+      digitalWrite(PIN_LED_STATUS, LOW);
+      delay(150);
+    }
   }
 }
 
@@ -335,7 +400,6 @@ void loop() {
       int adcComMotor = lerAdcMediana();
       unsigned long tempoLigada = agora - instanteLigouBombaMs;
 
-      // Nos primeiros 1.8s de giro do motor, calibra o ponto mais baixo da tensão da protoboard
       if (tempoLigada < TEMPO_ESTABILIZACAO_MOTOR_MS) {
         if (adcComMotor < adcComMotorBase) {
           adcComMotorBase = adcComMotor;
@@ -349,7 +413,6 @@ void loop() {
         if (adcCompensado > 1023) adcCompensado = 1023;
         float umidadeCompensada = converterAdcParaPorcentagem(adcCompensado);
 
-        // Exige que o sensor tenha uma queda adicional real (solo molhado tocando a haste)
         bool quedaRealNoSensor = (adcComMotor <= (adcComMotorBase - 40)) || (adcComMotor < 200);
         if (quedaRealNoSensor && umidadeCompensada >= limiteUmidadeMin) {
           contagemSoloUmidoComBomba++;
@@ -357,8 +420,6 @@ void loop() {
           contagemSoloUmidoComBomba = 0;
         }
 
-        // Enquanto NÃO confirmar 3 leituras seguidas de solo úmido, envia umidadeAntesDaBomba
-        // para o Backend NUNCA mandar "DESLIGA" no meio da rega!
         if (contagemSoloUmidoComBomba >= 3) {
           if (modoAutoRemoto) {
             comandoRemotoAtivo = false;
