@@ -18,17 +18,19 @@ bool comandoRemotoAtivo        = false;
 bool bloqueioAutoSoloUmido     = false;
 
 int  adcSemMotor               = 980;
+int  adcComMotorBase           = 980;
 int  offsetMotorAdc            = 0;
 int  contagemSoloUmidoComBomba = 0;
 unsigned long instanteLigouBombaMs = 0;
 
 float umidadeAtual             = 55.0;
+float umidadeAntesDaBomba      = 55.0;
 float temperaturaAtual         = 25.4;
 float nivelAguaAtual           = 82.0;
 float phAtual                  = 6.5;
 
-const unsigned long TIMEOUT_SEGURANCA_BOMBA_MS = 60000;
-const unsigned long TEMPO_MINIMO_REGA_AUTO_MS  = 2000;
+const unsigned long TIMEOUT_SEGURANCA_BOMBA_MS   = 60000;
+const unsigned long TEMPO_ESTABILIZACAO_MOTOR_MS = 1800;
 
 unsigned long ultimoEnvioMs       = 0;
 unsigned long ultimoDisplayMs     = 0;
@@ -192,7 +194,8 @@ void acionarPinoRele(bool ligar) {
 void atualizarHardwareBomba(bool ligar) {
   if (ligar && !bombaLigada) {
     adcSemMotor = lerAdcMediana();
-    umidadeAtual = converterAdcParaPorcentagem(adcSemMotor);
+    umidadeAntesDaBomba = converterAdcParaPorcentagem(adcSemMotor);
+    umidadeAtual = umidadeAntesDaBomba;
 
     escreverTextoLCD(true);
     delay(40);
@@ -202,20 +205,17 @@ void atualizarHardwareBomba(bool ligar) {
     instanteLigouBombaMs = millis();
     acionarPinoRele(true);
 
-    delay(400);
-    int adcLogoAposLigar = lerAdcMediana();
-    int queda = adcSemMotor - adcLogoAposLigar;
-    if (queda > 0 && queda < 450) {
-      offsetMotorAdc = queda;
-    } else {
-      offsetMotorAdc = 0;
-    }
+    // Mede a queda inicial de tensão da protoboard causada pelo motor (sem trava de 450!)
+    delay(500);
+    adcComMotorBase = lerAdcMediana();
+    int queda = adcSemMotor - adcComMotorBase;
+    offsetMotorAdc = (queda > 0) ? (queda + 25) : 25;
   } else if (!ligar && bombaLigada) {
     bombaLigada = false;
     contagemSoloUmidoComBomba = 0;
     acionarPinoRele(false);
 
-    delay(300);
+    delay(350);
     adcSemMotor = lerAdcMediana();
     umidadeAtual = converterAdcParaPorcentagem(adcSemMotor);
     ressincronizarLcdI2C();
@@ -286,6 +286,7 @@ void setup() {
 
   adcSemMotor = lerAdcMediana();
   umidadeAtual = converterAdcParaPorcentagem(adcSemMotor);
+  umidadeAntesDaBomba = umidadeAtual;
 
   inicializarLcdI2C();
   lcdI2CPosicionar(0, 0);
@@ -319,10 +320,11 @@ void loop() {
     ultimoDisplayMs = agora;
 
     if (!bombaLigada) {
-      adcSemMotor      = lerAdcMediana();
-      umidadeAtual     = converterAdcParaPorcentagem(adcSemMotor);
-      temperaturaAtual = 25.8;
-      nivelAguaAtual   = 82.0;
+      adcSemMotor         = lerAdcMediana();
+      umidadeAtual        = converterAdcParaPorcentagem(adcSemMotor);
+      umidadeAntesDaBomba = umidadeAtual;
+      temperaturaAtual    = 25.8;
+      nivelAguaAtual      = 82.0;
 
       if (umidadeAtual < limiteUmidadeMin) {
         bloqueioAutoSoloUmido = false;
@@ -330,30 +332,50 @@ void loop() {
 
       escreverTextoLCD(false);
     } else {
-      int adcComMotor   = lerAdcMediana();
-      int adcCompensado = adcComMotor + offsetMotorAdc;
-      if (adcCompensado > 1023) adcCompensado = 1023;
+      int adcComMotor = lerAdcMediana();
+      unsigned long tempoLigada = agora - instanteLigouBombaMs;
 
-      umidadeAtual     = converterAdcParaPorcentagem(adcCompensado);
+      // Nos primeiros 1.8s de giro do motor, calibra o ponto mais baixo da tensão da protoboard
+      if (tempoLigada < TEMPO_ESTABILIZACAO_MOTOR_MS) {
+        if (adcComMotor < adcComMotorBase) {
+          adcComMotorBase = adcComMotor;
+        }
+        int quedaMaxima = adcSemMotor - adcComMotorBase;
+        offsetMotorAdc = (quedaMaxima > 0) ? (quedaMaxima + 25) : 25;
+        contagemSoloUmidoComBomba = 0;
+        umidadeAtual = umidadeAntesDaBomba;
+      } else {
+        int adcCompensado = adcComMotor + offsetMotorAdc;
+        if (adcCompensado > 1023) adcCompensado = 1023;
+        float umidadeCompensada = converterAdcParaPorcentagem(adcCompensado);
+
+        // Exige que o sensor tenha uma queda adicional real (solo molhado tocando a haste)
+        bool quedaRealNoSensor = (adcComMotor <= (adcComMotorBase - 40)) || (adcComMotor < 200);
+        if (quedaRealNoSensor && umidadeCompensada >= limiteUmidadeMin) {
+          contagemSoloUmidoComBomba++;
+        } else {
+          contagemSoloUmidoComBomba = 0;
+        }
+
+        // Enquanto NÃO confirmar 3 leituras seguidas de solo úmido, envia umidadeAntesDaBomba
+        // para o Backend NUNCA mandar "DESLIGA" no meio da rega!
+        if (contagemSoloUmidoComBomba >= 3) {
+          if (modoAutoRemoto) {
+            comandoRemotoAtivo = false;
+            bloqueioAutoSoloUmido = true;
+            atualizarHardwareBomba(false);
+          } else {
+            umidadeAtual = umidadeCompensada;
+          }
+          ultimoEnvioMs = agora;
+          enviarLeiturasSerial();
+        } else {
+          umidadeAtual = umidadeAntesDaBomba;
+        }
+      }
+
       temperaturaAtual = 24.4;
       nivelAguaAtual   = 79.0;
-
-      bool tempoMinimoCumprido = (agora - instanteLigouBombaMs) >= TEMPO_MINIMO_REGA_AUTO_MS;
-      if (tempoMinimoCumprido && umidadeAtual >= limiteUmidadeMin) {
-        contagemSoloUmidoComBomba++;
-      } else {
-        contagemSoloUmidoComBomba = 0;
-      }
-
-      if (contagemSoloUmidoComBomba >= 3) {
-        if (modoAutoRemoto) {
-          comandoRemotoAtivo = false;
-          bloqueioAutoSoloUmido = true;
-          atualizarHardwareBomba(false);
-        }
-        ultimoEnvioMs = agora;
-        enviarLeiturasSerial();
-      }
     }
   }
 
